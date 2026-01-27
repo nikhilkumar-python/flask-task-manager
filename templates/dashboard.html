@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Dashboard</h2>
+<p>
+    Welcome {{ session['username'] }}
+    | <a href="/logout">Logout</a>
+</p>
+
+<a href="/add-task">Add Task</a>
+
+<hr>
+
+<h3>Your Tasks</h3>
+
+<ul>
+    {% for task in tasks %}
+        <li>
+            {{ task[1] }}
+            <a href="/edit-task/{{ task[0] }}">Edit</a>
+            <a href="/delete-task/{{ task[0] }}">Delete</a>
+        </li>
+    {% else %}
+        <li>No tasks added yet</li>
+    {% endfor %}
+</ul>
+
+
+
+</body>
+</html>
