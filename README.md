@@ -1,21 +1,44 @@
-# flask-task-manager
-A Flask-based task manager app with authentication and CRUD operations
-# Flask Task Manager App
+# Flask Task Manager
+
+A task management web application built using Flask that allows users to
+register, log in, and manage their daily tasks securely.
 
 ## Features
-- User Registration & Login
-- Session-based Authentication
-- Add, View, Edit, Delete Tasks
-- User-specific data access
-- SQLite database
+- User registration and authentication
+- Create, update, delete tasks
+- Task status tracking
+- Secure password hashing
+- Session-based authentication
 
 ## Tech Stack
 - Python
 - Flask
 - SQLite
-- HTML
+- HTML, CSS
+- Flask-Login
 
-## How to Run
-1. Install Flask
-2. Run `python app.py`
-3. Open `http://127.0.0.1:5000/login`
+## Project Structure
+The application follows a modular structure to improve maintainability:
+- routes.py handles URL routing
+- models.py manages database models
+- auth.py manages authentication logic
+
+## Installation & Setup
+1. Clone the repository
+2. Create virtual environment
+3. Install dependencies:
+   pip install -r requirements.txt
+4. Run the application:
+   python run.py
+
+## What I Learned
+- Flask application structuring
+- Authentication and authorization
+- CRUD operations with relational databases
+- Writing cleaner, modular Python code
+
+## Future Improvements
+- REST API version of this app
+- JWT-based authentication
+- Pagination and search
+- Deployment on cloud
