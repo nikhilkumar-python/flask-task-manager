@@ -1,63 +1,93 @@
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, render_template, request, session, redirect, url_for, flash
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = "super_secret_key_change_this"
+DATABASE = "database.db"
 
+
+# ---------------- DB CONNECTION ----------------
+def get_db():
+    return sqlite3.connect(DATABASE)
+
+
+# ---------------- LOGIN REQUIRED DECORATOR ----------------
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please login first", "warning")
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+# ---------------- REGISTER ----------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
 
-        conn = sqlite3.connect("database.db")
+        hashed_password = generate_password_hash(password)
+
+        conn = get_db()
         cursor = conn.cursor()
 
-        cursor.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
-            (username, password)
-        )
+        try:
+            cursor.execute(
+                "INSERT INTO users (username, password) VALUES (?, ?)",
+                (username, hashed_password)
+            )
+            conn.commit()
+            flash("Registration successful. Please login.", "success")
+            return redirect("/login")
 
-        conn.commit()
-        conn.close()
+        except:
+            flash("Username already exists", "danger")
 
-        return "User registered successfully"
+        finally:
+            conn.close()
 
     return render_template("register.html")
 
+
+# ---------------- LOGIN ----------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
 
-        conn = sqlite3.connect("database.db")
+        conn = get_db()
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT * FROM users WHERE username = ? AND password = ?",
-            (username, password)
+            "SELECT * FROM users WHERE username = ?",
+            (username,)
         )
 
         user = cursor.fetchone()
         conn.close()
 
-        if user:
+        if user and check_password_hash(user[2], password):
             session["user_id"] = user[0]
             session["username"] = user[1]
+            flash("Login successful", "success")
             return redirect("/dashboard")
 
-        else:
-            return "Invalid username or password"
+        flash("Invalid username or password", "danger")
 
     return render_template("login.html")
 
-@app.route("/dashboard")
-def dashboard():
-    if "user_id" not in session:
-        return redirect("/login")
 
-    conn = sqlite3.connect("database.db")
+# ---------------- DASHBOARD ----------------
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -70,15 +100,15 @@ def dashboard():
 
     return render_template("dashboard.html", tasks=tasks)
 
-@app.route("/add-task", methods=["GET", "POST"])
-def add_task():
-    if "user_id" not in session:
-        return redirect("/login")
 
+# ---------------- ADD TASK ----------------
+@app.route("/add-task", methods=["GET", "POST"])
+@login_required
+def add_task():
     if request.method == "POST":
         title = request.form["title"]
 
-        conn = sqlite3.connect("database.db")
+        conn = get_db()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -89,65 +119,13 @@ def add_task():
         conn.commit()
         conn.close()
 
+        flash("Task added successfully", "success")
         return redirect("/dashboard")
 
     return render_template("add_task.html")
 
+
+# ---------------- DELETE TASK ----------------
 @app.route("/delete-task/<int:task_id>")
-def delete_task(task_id):
-    if "user_id" not in session:
-        return redirect("/login")
-
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "DELETE FROM tasks WHERE id = ? AND user_id = ?",
-        (task_id, session["user_id"])
-    )
-
-    conn.commit()
-    conn.close()
-
-    return redirect("/dashboard")
-
-@app.route("/edit-task/<int:task_id>", methods=["GET", "POST"])
-def edit_task(task_id):
-    if "user_id" not in session:
-        return redirect("/login")
-
-    conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
-
-    if request.method == "POST":
-        title = request.form["title"]
-
-        cursor.execute(
-            "UPDATE tasks SET title = ? WHERE id = ? AND user_id = ?",
-            (title, task_id, session["user_id"])
-        )
-
-        conn.commit()
-        conn.close()
-        return redirect("/dashboard")
-
-    cursor.execute(
-        "SELECT * FROM tasks WHERE id = ? AND user_id = ?",
-        (task_id, session["user_id"])
-    )
-    task = cursor.fetchone()
-    conn.close()
-
-    if task is None:
-        return redirect("/dashboard")
-
-    return render_template("edit_task.html", task=task)
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
+@login_required
+def delete_task(t_
