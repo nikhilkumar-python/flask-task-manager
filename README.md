@@ -23,6 +23,11 @@ Users can **register, login, and manage their own tasks**.
 
 ---
 
+## 📸 Screenshots
+<img width="1920" height="1080" alt="{5F8B1464-A743-46DD-B251-FC9D6FBF9350}" src="https://github.com/user-attachments/assets/c64c0939-8884-4927-b545-a7a3f46485db" />
+
+---
+
 ## Tech Stack
 
 * Python
